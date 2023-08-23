@@ -1,26 +1,21 @@
-from time import time, sleep
+from time import time, sleep, 
 import time
 import ntptime  # NPT server for accurate time with utime module
 import utime
 import machine
 from stepperTEST import STEPPER
-
 try:
     import usocket as socket
 except:
     import socket
-
 from umqtt.simple import MQTTClient
 import ubinascii
 import micropython
 import network
 import esp32
 import esp
-
 esp.osdebug(None)
-
 import gc
-
 gc.collect()
 import ntptime
 
@@ -40,8 +35,6 @@ def do_connect():
         while not wlan.isconnected():
             pass
     print('network config:', wlan.ifconfig())
-
-
 do_connect()
 
 ######### MQTT Topics ####################
@@ -50,59 +43,19 @@ SERVER = '192.168.178.52'  # MQTT Server Address
 CLIENT_ID = 'temp_test'
 TOPIC_stepper = b'stepper/#'
 TOPIC_stepper_state = b'stepper/run/'
-TOPIC_stepper_change_state = b'stepper/change_state/'
-TOPIC_stepper_change_state_response = b'stepper/change_state/response/'
-TOPIC_stepper_temp = b'stepper/temp/'
-TOPIC_stepper_hum = b'stepper/hum/'
-TOPIC_stepper_time = b'stepper/time/'
-
 client = MQTTClient(CLIENT_ID, SERVER, port=1883)
 client.connect()
 
 
-def sub_cb(topic, msg):
-    print((topic, msg))
-    if topic == b'stepper/run/' and msg == b'on':
-        print('Motor initiate motor!')
-        rotation = 360 * 20
-        speed = 80
-        stepper.step(rotation, speed)
-        stepper.release()
-        print('Motor was activated')
-    if topic == b'stepper/change_state/' and msg == b'status':
-        ###### publish status ###########
-        message = b'good'
-        client.publish(TOPIC_stepper_change_state_response, message)
-        ###### Publishing local time with status #########
-        current_time = utime.localtime()
-        current_time = time.localtime(time.time() + UTC_OFFSET)  # adjust to Berlin time +2h
-        year, month, day, hour, minute, second, _, _ = current_time
-        msg_time_stamp = str(year) + "/" + str(month) + "/" + str(day) + "/" + str(hour) + "/" + str(
-            minute) + "/" + str(second)
-        msg_time_stamp.encode()
-        client.publish(TOPIC_stepper_time, msg_time_stamp)
+# def restart_and_reconnect():
+#     print('Failed to connect to MQTT broker. Reconnecting...')
+#     time.sleep(10)
+#     machine.reset()
 
-
-def connect_and_subscribe():
-    global CLIENT_ID, SERVER, TOPIC_stepper_change_state
-    client = MQTTClient(CLIENT_ID, SERVER)
-    client.set_callback(sub_cb)
-    client.connect()
-    client.subscribe(TOPIC_stepper)
-    print('Connected to %s MQTT broker, subscribed to %s topic' % (SERVER, TOPIC_stepper))
-    return client
-
-
-def restart_and_reconnect():
-    print('Failed to connect to MQTT broker. Reconnecting...')
-    time.sleep(10)
-    machine.reset()
-
-
-try:
-    client = connect_and_subscribe()
-except OSError as e:
-    restart_and_reconnect()
+# try:
+#     client = connect_and_subscribe()
+# except OSError as e:
+#     restart_and_reconnect()
 
 ######### Stepper #########################
 
@@ -127,7 +80,6 @@ ntptime.settime()
 
 UTC_OFFSET = 2 * 60 * 60  # change the '2' according to your timezone
 current_time_berlin = time.localtime(time.time() + UTC_OFFSET)
-print(current_time_berlin)
 
 # Get the current local time after synchronization
 # current_time = utime.localtime()
@@ -146,8 +98,6 @@ hour = current_time_berlin[3]
 minute = current_time_berlin[4]
 second = current_time_berlin[5]
 
-print(current_time_berlin)
-
 # Print the current local time
 print("Current Time: {}-{}-{} {}:{}:{}".format(year, month, day, hour, minute, second))
 
@@ -155,11 +105,14 @@ print("Current Time: {}-{}-{} {}:{}:{}".format(year, month, day, hour, minute, s
 
 while True:
     try:
-        status = client.check_msg()  # listening specific MQTT topics
-        ####### Timer to start pump ##############
-        time_to_pump_1 = (0, 0, 0, 21, 30, 30, 0, 0)
-        time_to_pump_2 = (0, 0, 0, 21, 45, 30, 0, 0)
-        time_to_pump_3 = (0, 0, 0, 22, 00, 30, 0, 0)
+        ####### Timer to start pump evening ##############
+        time_to_pump_1 = (0, 0, 0, 21, 0, 30, 0, 0)
+        time_to_pump_2 = (0, 0, 0, 21, 15, 30, 0, 0)
+        time_to_pump_3 = (0, 0, 0, 21, 30, 30, 0, 0)
+        ####### Timer to start pump morning ##############
+        time_to_pump_4 = (0, 0, 0, 7, 0, 30, 0, 0)
+        time_to_pump_5= (0, 0, 0, 7, 15, 30, 0, 0)
+        time_to_pump_6 = (0, 0, 0, 7, 45, 30, 0, 0)
         # Get the current local time
         current_time = utime.localtime()
         current_time = time.localtime(time.time() + UTC_OFFSET)  # adjust to Berlin time +2h
@@ -173,18 +126,21 @@ while True:
         current_time[7] = 0  # Set microseconds to zero
         current_time = tuple(current_time)
         print(current_time)
-        if time_to_pump_1 == current_time or time_to_pump_2 == current_time or time_to_pump_3 == current_time:
+        #client.publish(TOPIC_stepper_state, msg_time_stamp)
+        if time_to_pump_1 == current_time or time_to_pump_2 == current_time or time_to_pump_3 == current_time or time_to_pump_4 == current_time or time_to_pump_5 == current_time or time_to_pump_6 == current_time:
             print('Motor initiate motor!')
             rotation = 360 * 200
             speed = 80
             stepper.step(rotation, speed)
             stepper.release()
-            #lient.publish(TOPIC_stepper_time, msg_time_stamp)
-            print('Motor was activated')
-        time.sleep(0.5)
-
-
-
+            ###### Publishing local time with status #########
+            year, month, day, hour, minute, second, _, _ = current_time
+            msg_time_stamp = str(year) + "/" + str(month) + "/" + str(day) + "/" + str(hour) + "/" + str(
+            minute) + "/" + str(second)
+            client.publish(TOPIC_stepper_state, msg_time_stamp)
+            print('Motor was activated')          
+        time.sleep(1)
     except Exception as e:
         print("An error occurred:", e)
         machine.reset()
+
