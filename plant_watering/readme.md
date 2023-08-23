@@ -1,7 +1,7 @@
 A short guide to safe my tomatoe plants during vacation. 
 If you have no time or no coding experience, do the [quick-fix](https://www.blumat.de/blumat-classic).
 
-My setup:
+## My setup
 
 - ESP32 microcontroller (install UMQTT.simple, etc. packages with Thonny)
 - L298N stepper motor driver
@@ -9,11 +9,14 @@ My setup:
 
   ![scheme](https://github.com/fabianzott/home_automation_IoT/assets/85985274/89cf1a1a-61d8-482c-b8f5-571cc702c152)
 
+## Watering Strategy
+Your tomato plants will receive water twice a day – in the morning and evening. Refer to the main.py file for predefined watering times. However, an important note: the L298N stepper motor driver can become very hot during operation. To counteract this, the system pumps water three times with a cooling-off period of 15 minutes between each watering cycle.
 
-The plants are watered in the morning and in the evening at predefined times (see main.py). The L298N stepper motor driver can get !!!very hot!!! so I pump water three times with a cool down period of 15min in between. The systems sends status messages (time stamp) via MQTT IoT protocoll when the pump is activated.
+## MQTT Status Messages
+Stay informed about your plant's well-being even from afar. The system sends status messages, including timestamps, via the MQTT IoT protocol whenever the dosing pump is activated. This insight provides peace of mind that your plants are being tended to as planned.
 
-Issues:
-Remote activation via my app was too unstable.
+## Issues
+Remote activation via "MQTT IoT Broker" app was too unstable, e.g. sometimes blocking the channel.
 
-To do:
+## To do
 In the future I will add a real time clock module.
