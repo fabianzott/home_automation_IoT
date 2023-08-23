@@ -18,7 +18,7 @@ Let's delve into the key components that make up this setup:
 ## Communication Flow
 The communication path for this setup is as follows:
 
-Sensors/Relays ←→ ESP32/ESP2866 ←→ Raspberry Pi (Local Mosquitto Broker via Wlan) ←→ HiveMQ Cloud ←→ Android Smartphone
+Sensors/Relays ←→ ESP32/ESP2866 ←→ Raspberry Pi (Local Mosquitto Broker via WiFi) ←→ HiveMQ Cloud ←→ Android Smartphone
 
 Feel free to explore the repository and adapt the principles shared here to your own projects. While this may not be a comprehensive guide, I'm optimistic that the information here will be instrumental in addressing challenges you encounter.
 
