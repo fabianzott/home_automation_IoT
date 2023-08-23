@@ -10,5 +10,10 @@ My setup:
   ![scheme](https://github.com/fabianzott/home_automation_IoT/assets/85985274/89cf1a1a-61d8-482c-b8f5-571cc702c152)
 
 
-The plants are watered in the morning and in the evening at predefined times (see main.py). The L298N stepper motor driver can get !!!very hot!!! so I pump water three times with a cool down period of 15min in between. The systems sends status messages via MQTT IoT protocoll when the pump is activated.
+The plants are watered in the morning and in the evening at predefined times (see main.py). The L298N stepper motor driver can get !!!very hot!!! so I pump water three times with a cool down period of 15min in between. The systems sends status messages (time stamp) via MQTT IoT protocoll when the pump is activated.
+
+Issues:
 Remote activation via my app was too unstable.
+
+To do:
+In the future I will add a real time clock module.
