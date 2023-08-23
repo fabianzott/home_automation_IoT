@@ -21,8 +21,8 @@ import ntptime
 
 ############# Connect to WiFi Network ###########
 
-ssid = 'FRITZ!Box 7530 PX'
-password = '49920537718620591561'
+ssid = '<WIFI_name>'
+password = '<WIFI_password>'
 
 
 def do_connect():
@@ -31,7 +31,7 @@ def do_connect():
     wlan.active(True)
     if not wlan.isconnected():
         print('connecting to network...')
-        wlan.connect('FRITZ!Box 7530 PX', '49920537718620591561')
+        wlan.connect('<WIFI_name>', '<WIFI_password>')
         while not wlan.isconnected():
             pass
     print('network config:', wlan.ifconfig())
@@ -39,7 +39,7 @@ do_connect()
 
 ######### MQTT Topics ####################
 
-SERVER = '192.168.178.52'  # MQTT Server Address
+SERVER = '<IP_adress>'  # local MQTT Server Address -> Raspberry Pi
 CLIENT_ID = 'temp_test'
 TOPIC_stepper = b'stepper/#'
 TOPIC_stepper_state = b'stepper/run/'
