@@ -1,95 +1,103 @@
-# stepper_old.py
+"""
+Copyright 2020 LeMaRiva|Tech (Mauro Riva) info@lemariva.com
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
-# A micropython driver for 4-phase, unipolar stepper motors such as
-# the 28BYJ-48
+import utime
+from machine import Pin
 
-# Relesed to the Public Domain by Nicko van Someren, 2020
 
-# The constructor for the Stepper class takes as arguments the four
-# pins for driving the motor phases, in phase order, and optionally a
-# timer. The pins can be passed as pin numbers or machine.Pin objects
-# and the timer can be a machine.Timer object or a timer index. Note
-# that if two stepper motors use the same timer then they will not be
-# able to run at the same time.
-#
-# The run() method takes a number of steps and an optional delay (in
-# seconds) between driving the steps (the default is 1ms). A negative
-# step count will drive the motor in the oposite direction to a
-# positive count. The count represents "half steps" since the driver
-# alternates driving single coils and driving pairs of adjacent coils.
-# Calls to run() return immediately; the motor runs on a timer in the
-# background. Calling run() again before the previous command has
-# finished adds the new count to the old count, so the destination
-# position is the sum of the requests; the delay is set to the new
-# value if stepper is not already at its final location.
-#
-# The stop() method will stop the rotation of the motor. It returns
-# the number of un-taken steps that would be needed to perform the
-# outstanding requests from previous calls to run().
-#
-# The is_running property returns true if the motor is running,
-# i.e. stop() would return a non-zero value, and false otherwise.
+class STEPPER:
 
-import machine
-import time
+    def __init__(self, device_config):
+        self._In1 = Pin(device_config["In1"], Pin.OUT)
+        self._In2 = Pin(device_config["In2"], Pin.OUT)
+        self._In3 = Pin(device_config["In3"], Pin.OUT)
+        self._In4 = Pin(device_config["In4"], Pin.OUT)
+        self._number_of_steps = device_config["number_of_steps"] + 1
+        self._max_speed = 60 * 1000 * 1000 / self._number_of_steps / device_config["max_speed"]
+        self._step_number = 0
+        self._last_step_time = 0
+        self.set_speed(device_config["max_speed"] / 2)
 
-# When the following number is sampled at four consecutive
-# even-numbered bits it will have two bits set, but sampling at four
-# consecutive odd-numbered bits will only yield one bit set.
+    def set_speed(self, speed):
+        self._step_delay = 60 * 1000 * 1000 / self._number_of_steps / speed
+        if self._step_delay < self._max_speed:
+            self._step_delay = self._max_speed
 
-_WAVE_MAGIC = 0b0000011100000111
+    def step_motor(self, step):        
+        if step == 0:  # 1010
+            
+            self._In1.value(1)
+            self._In2.value(0)
+            self._In3.value(1)
+            self._In4.value(0)
+            
+        elif step == 1:  # 0110
+            
+            self._In1.value(0)
+            self._In2.value(1)
+            self._In3.value(1)
+            self._In4.value(0)
+            
+        elif step == 2:  # 0101
+            
+            self._In1.value(0)
+            self._In2.value(1)
+            self._In3.value(0)
+            self._In4.value(1)
+            
+        elif step == 3:  # 1001
+            
+            self._In1.value(1)
+            self._In2.value(0)
+            self._In3.value(0)
+            self._In4.value(1)
+            
 
-class Stepper:
-    def __init__(self, A, B, C, D, T=1):
-        if not isinstance(T, machine.Timer):
-            T = machine.Timer(T)
-        self._timer = T
-        l = []
-        for p in (A, B, C, D):
-            if not isinstance(p, machine.Pin):
-                p = machine.Pin(p, machine.Pin.OUT)
-            l.append(p)
-        self._pins = l
-        self._phase = 0
-        self._stop()
-        self._run_remaining = 0
+    def release(self):
+        self._In1.value(0)
+        self._In2.value(0)
+        self._In3.value(0)
+        self._In4.value(0)       
+        
+    def step(self, steps_to_move, speed=None, hold=True):
+        if speed is not None:
+            self.set_speed(speed)
 
-    def _stop(self):
-        [p.off() for p in self._pins]
+        steps_left = abs(steps_to_move)
 
-    # Note: This is called on an interrupt on some platforms, so it must not use the heap
-    def _callback(self, t):
-        if self._run_remaining != 0:
-            direction = 1 if self._run_remaining > 0 else -1
-            self._phase = (self._phase + direction) % 8
-            wave = _WAVE_MAGIC >> self._phase
-            for i in range(4):
-                self._pins[i].value((wave >> (i*2)) & 1)
-            self._run_remaining -= direction
+        if steps_to_move > 0:
+            direction = 1
         else:
-            self._timer.deinit()
-            self._stop()
+            direction = 0
 
-    def run(self, count, delay=0.001):
-        tick_hz=1000000
-        period = int(delay*tick_hz)
-        if period < 500:
-            period = 500
-        self._run_remaining += count
-        if self._run_remaining != 0:
-            self._timer.init(period=period, tick_hz=tick_hz,
-                             mode=machine.Timer.PERIODIC, callback=self._callback)
-        else:
-            self._timer.deinit()
-            self._stop()
+        while steps_left > 0:
+            now = utime.ticks_us()
+            if now - self._last_step_time >= self._step_delay:
+                self._last_step_time = now
+                if direction == 1:
+                    self._step_number += 1
 
-    def stop(self):
-        remaining = self._run_remaining
-        self._run_remaining = 0
-        self._timer.deinit()
-        self._stop()
-        return remaining
+                if direction == 0:
+                    if self._step_number == 0:
+                        self._step_number == steps_left
 
-    @property
-    def is_running(self):
-        return self._run_remaining != 0
+                    self._step_number -= 1
+
+                self.step_motor(self._step_number % 4)
+                steps_left -= 1
+
+        if self._step_number == steps_left:
+            self._step_number = 0
+
+        if steps_left == 0 and not hold:
+            self.release()
