@@ -3,7 +3,7 @@ If you have no time or no coding experience, do the [quick-fix](https://www.blum
 
 My setup:
 
-- ESP32 microcontroller
+- ESP32 microcontroller (install UMQTT.simple, etc. packages with Thonny)
 - L298N stepper motor driver
 - NEMA17 dosing pump
 
