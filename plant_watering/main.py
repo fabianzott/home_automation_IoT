@@ -3,7 +3,7 @@ import time
 import ntptime  # NPT server for accurate time with utime module
 import utime
 import machine
-from stepperTEST import STEPPER
+from stepper import STEPPER
 try:
     import usocket as socket
 except:
