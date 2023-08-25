@@ -9,8 +9,8 @@ from umqtt.robust import MQTTClient # none INSTALLESD!!!!!
 
 ######### Soil Moisture #####
 adc = ADC(0)
-max_val = 38143
-min_val = 11519
+max_val = 38143   # this value has to be observed and can change over time -> absolute calibration is too time consuming
+min_val = 11519   # this value has to be observed and can change over time -> absolute calibration is too time consuming
 
 def convert_to_percent(x, in_min, in_max, out_min, out_max):
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
