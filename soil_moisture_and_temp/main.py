@@ -5,7 +5,7 @@ from machine import Pin, I2C
 from machine import ADC
 from time import sleep
 import bme280
-from umqtt.robust import MQTTClient # none INSTALLESD!!!!!
+from umqtt.robust import MQTTClient # here umqtt.robust package is used
 
 ######### Soil Moisture #####
 adc = ADC(0)
